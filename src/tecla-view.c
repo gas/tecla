@@ -208,6 +208,9 @@ pair_state (GtkWidget *widget,
 			  G_CALLBACK (bind_state), other_widget);
 	g_signal_connect (other_widget, "state-flags-changed",
 			  G_CALLBACK (bind_state), widget);
+        g_object_bind_property (other_widget, "label",
+                                widget, "label",
+                                G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
 }
 
 static void
@@ -424,6 +427,9 @@ update_from_model_foreach (const gchar *name,
 		action = tecla_model_get_key_label (view->model, view->level, name);
 
 	tecla_key_set_label (key, action);
+
+        if (action == NULL || strcmp (action, "") == 0)
+                tecla_key_set_icon (key, tecla_model_get_key_icon (view->model, view->level, name));
 }
 
 static void
