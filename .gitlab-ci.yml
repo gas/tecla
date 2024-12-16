@@ -93,12 +93,13 @@ check-merge-request:
 
 .tecla.fedora@common:
   variables:
-    BASE_TAG: '2025-02-19.0'
+    BASE_TAG: '2025-03-03.0'
     FDO_DISTRIBUTION_PACKAGES:
       git
       meson
     FDO_DISTRIBUTION_EXEC: |
       dnf builddep -y tecla && \
+      dnf install -y librsvg2-devel && \
       dnf builddep -y gtk4 && \
       git clone --depth 1 https://gitlab.gnome.org/GNOME/gtk.git && \
         cd gtk && \
@@ -107,7 +108,6 @@ check-merge-request:
         meson install -C _build && \
         cd .. && \
         rm -rf _build
-
 
 .tecla.fedora:latest@x86_64:
   extends: .tecla.fedora@common

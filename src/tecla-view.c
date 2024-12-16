@@ -406,6 +406,7 @@ update_from_model_foreach (const gchar *name,
 {
 	xkb_keycode_t keycode;
 	g_autofree gchar *action = NULL;
+	g_autofree gchar *icon = NULL;
 	guint keyval;
 
 	keycode = tecla_model_get_key_keycode (view->model, name);
@@ -426,7 +427,15 @@ update_from_model_foreach (const gchar *name,
 	if (!action)
 		action = tecla_model_get_key_label (view->model, view->level, name);
 
-	tecla_key_set_label (key, action);
+	icon = tecla_model_get_key_icon (view->model, view->level, name);
+
+	if (icon) {
+		tecla_key_set_icon (key, icon);
+		tecla_key_set_label (key, NULL);
+	} else {
+		tecla_key_set_label (key, action);
+		tecla_key_set_icon (key, NULL);
+	}
 }
 
 static void

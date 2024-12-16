@@ -1,4 +1,4 @@
-/* Copyright (C) 2023 Red Hat, Inc.
+/* Copyright (C) 2021 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
- * Author: Carlos Garnacho <carlosg@gnome.org>
- *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
@@ -22,15 +20,7 @@
 
 #pragma once
 
-#define TECLA_TYPE_KEY (tecla_key_get_type ())
-G_DECLARE_FINAL_TYPE (TeclaKey, tecla_key, TECLA, KEY, GtkWidget)
+#define SVG_TYPE_PAINTABLE (svg_paintable_get_type ())
+G_DECLARE_FINAL_TYPE (SvgPaintable, svg_paintable, SVG, PAINTABLE, GObject)
 
-GtkWidget * tecla_key_new (const gchar *name);
-
-void tecla_key_set_label (TeclaKey    *key,
-			  const gchar *label);
-
-void tecla_key_set_icon  (TeclaKey    *key,
-			  const gchar *icon);
-
-const gchar * tecla_key_get_name (TeclaKey *key);
+GdkPaintable * svg_paintable_new (GFile *file);

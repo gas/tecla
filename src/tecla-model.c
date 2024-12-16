@@ -432,6 +432,12 @@ get_key_label (xkb_keysym_t key)
 	return g_strdup (label);
 }
 
+static gchar *
+get_key_icon (xkb_keysym_t key)
+{
+	return NULL;
+}
+
 TeclaModel *
 tecla_model_new_from_xkb_keymap (struct xkb_keymap *xkb_keymap)
 {
@@ -513,6 +519,23 @@ tecla_model_get_key_label (TeclaModel  *model,
 		return NULL;
 
 	return get_key_label (keysym);
+}
+
+gchar *
+tecla_model_get_key_icon (TeclaModel  *model,
+			  int          level,
+			  const gchar *key)
+{
+	xkb_keycode_t keycode;
+	guint keysym;
+
+	keycode = xkb_keymap_key_by_name (model->xkb_keymap, key);
+	keysym = tecla_model_get_keyval (model, level, keycode);
+
+	if (keysym == 0)
+		return NULL;
+
+	return get_key_icon (keysym);
 }
 
 guint
