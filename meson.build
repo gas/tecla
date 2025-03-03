@@ -52,6 +52,7 @@ libm_dep = cc.find_library('m')
 librsvg_dep = dependency('librsvg-2.0')
 
 subdir('data')
+subdir('icons')
 subdir('src')
 subdir('po')
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/keyboard-icons/">
+    <file>keyboard-lrm-symbolic.svg</file>
+    <file>keyboard-nnbsp-symbolic.svg</file>
+    <file>keyboard-non-breaking-hyphen-symbolic.svg</file>
+    <file>keyboard-rlm-symbolic.svg</file>
+    <file>keyboard-shy-symbolic.svg</file>
+    <file>keyboard-wj-symbolic.svg</file>
+    <file>keyboard-zws-symbolic.svg</file>
+    <file>keyboard-zwj-symbolic.svg</file>
+    <file>keyboard-zwnj-symbolic.svg</file>
+  </gresource>
+</gresources>

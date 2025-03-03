@@ -17,6 +17,7 @@ source = [
     'main.c',
     'svgpaintable.c',
     tecla_gresources,
+    keyboard_icons_gresources,
 ]
 
 tecla = executable('tecla',

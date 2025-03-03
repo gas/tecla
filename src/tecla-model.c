@@ -100,14 +100,8 @@ static struct {
 	const char *nick;
 } notable_chars[] = {
 	{ 0x00a, "⍽"      }, /* NO-BREAK SPACE */
-	{ 0x00ad, "SHY"   }, /* SOFT HYPHEN */
 	{ 0x034f, "CGJ"   }, /* COMBINING GRAPHEME JOINER */
 	{ 0x061c, "ALM"   }, /* ARABIC LETTER MARK */
-	{ 0x200b, "ZWS"   }, /* ZERO WIDTH SPACE */
-	{ 0x200c, "ZWNJ"  }, /* ZERO WIDTH NON-JOINER */
-	{ 0x200d, "ZWJ"   }, /* ZERO WIDTH JOINER */
-	{ 0x200e, "LRM"   }, /* LEFT-TO-RIGHT MARK */
-	{ 0x200f, "RLM"   }, /* RIGHT-TO-LEFT MARK */
 	{ 0x2028, "LS"    }, /* LINE SEPARATOR */
 	{ 0x2029, "PS"    }, /* PARAGRAPH SEPARATOR */
 	{ 0x202a, "LRE"   }, /* LEFT-TO-RIGHT EMBEDDING */
@@ -115,8 +109,6 @@ static struct {
 	{ 0x202c, "PDF"   }, /* POP DIRECTIONAL FORMATTING */
 	{ 0x202d, "LRO"   }, /* LEFT-TO-RIGHT OVERRIDE */
 	{ 0x202e, "RLO"   }, /* RIGHT-TO-LEFT OVERRIDE */
-	{ 0x202f, "⍽"     }, /* NARROW NO-BREAK SPACE */
-	{ 0x2060, "WJ"    }, /* WORD JOINER */
 	{ 0x2061, "FA"    }, /* FUNCTION APPLICATION */
 	{ 0x2062, "IT"    }, /* INVISIBLE TIMES */
 	{ 0x2063, "IS"    }, /* INVISIBLE SEPARATOR */
@@ -432,9 +424,37 @@ get_key_label (xkb_keysym_t key)
 	return g_strdup (label);
 }
 
+static struct {
+	gunichar uc;
+	const char *icon;
+} icons_map [] = {
+	{ 0x00ad, "keyboard-shy-symbolic.svg"   }, /* SOFT HYPHEN */
+	{ 0x200b, "keyboard-zws-symbolic.svg"   }, /* ZERO WIDTH SPACE */
+	{ 0x200c, "keyboard-zwnj-symbolic.svg"  }, /* ZERO WIDTH NON-JOINER */
+	{ 0x200d, "keyboard-zwj-symbolic.svg"   }, /* ZERO WIDTH JOINER */
+	{ 0x200e, "keyboard-lrm-symbolic.svg"   }, /* LEFT-TO-RIGHT MARK */
+	{ 0x200f, "keyboard-rlm-symbolic.svg"   }, /* RIGHT-TO-LEFT MARK */
+	{ 0x202f, "keyboard-nnbsp-symbolic.svg" }, /* NARROW NO-BREAK SPACE */
+	{ 0x2060, "keyboard-wj-symbolic.svg"    }, /* WORD JOINER */
+};
+
 static gchar *
 get_key_icon (xkb_keysym_t key)
 {
+	gunichar uc;
+
+	uc = gdk_keyval_to_unicode (key);
+
+	for (gsize i = 0; i < G_N_ELEMENTS (icons_map); i++) {
+		if (uc < icons_map[i].uc)
+			return NULL;
+
+		if (uc == icons_map[i].uc) {
+			return g_strdup_printf ("resource:///org/gnome/keyboard-icons/%s",
+						icons_map[i].icon);
+		}
+	}
+
 	return NULL;
 }
 
