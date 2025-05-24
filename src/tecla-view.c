@@ -23,7 +23,7 @@
 
 #include "tecla-view.h"
 
-#include "pc105.h"
+#include "ansi104.h"
 #include "tecla-key.h"
 
 enum
@@ -40,10 +40,10 @@ struct _TeclaView
 	TeclaModel *model;
 	guint model_changed_id;
 
-	GList *level2_keys;
-	GList *level3_keys;
+	GList *level2_keys; // Shift keys
+	GList *level3_keys; // AltGr keys
 	guint toggled_levels;
-	int level;
+	int level; // 0: base, 1: shift, 2: altgr, 3: shift+altgr
 };
 
 G_DEFINE_TYPE (TeclaView, tecla_view, GTK_TYPE_WIDGET)
@@ -208,6 +208,9 @@ pair_state (GtkWidget *widget,
 			  G_CALLBACK (bind_state), other_widget);
 	g_signal_connect (other_widget, "state-flags-changed",
 			  G_CALLBACK (bind_state), widget);
+        g_object_bind_property (other_widget, "label",
+                                widget, "label",
+                                G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
 }
 
 static void
@@ -232,14 +235,14 @@ construct_grid (TeclaView *view)
 	/* make sure we show the keyboard layout in RTL same as in LTR */
 	gtk_widget_set_direction (view->grid, GTK_TEXT_DIR_LTR);
 
-	for (i = 0; i < G_N_ELEMENTS (pc105_layout.rows); i++) {
-		for (j = 0; j < G_N_ELEMENTS (pc105_layout.rows[i].keys); j++) {
+	for (i = 0; i < G_N_ELEMENTS (ansi104_layout.rows); i++) {
+		for (j = 0; j < G_N_ELEMENTS (ansi104_layout.rows[i].keys); j++) {
 			TeclaLayoutKey *key;
 			GtkWidget *button, *prev;
 			double width, height;
 			int left, top;
 
-			key = &pc105_layout.rows[i].keys[j];
+			key = &ansi104_layout.rows[i].keys[j];
 			if (!key->name)
 				break;
 
@@ -398,37 +401,70 @@ tecla_view_init (TeclaView *view)
 
 static void
 update_from_model_foreach (const gchar *name,
-			   TeclaKey    *key,
+			   GtkWidget   *key_widget, // Cambiado de TeclaKey* a GtkWidget* para que coincida con GHFunc
 			   TeclaView   *view)
 {
+	TeclaKey *key = TECLA_KEY(key_widget); // Hacer el cast aquí
 	xkb_keycode_t keycode;
-	g_autofree gchar *action = NULL;
-	guint keyval;
+	g_autofree gchar *action_main = NULL;
+	g_autofree gchar *action_altgr = NULL;
+	guint keyval_main;
+    int altgr_paired_level;
+
+	if (!view->model) { // Añadir una guarda por si el modelo no está listo
+		tecla_key_set_label(key, "");
+		tecla_key_set_label_altgr(key, "");
+		return;
+	}
 
 	keycode = tecla_model_get_key_keycode (view->model, name);
-	keyval = tecla_model_get_keyval (view->model, 0, keycode);
+	keyval_main = tecla_model_get_keyval (view->model, 0, keycode); // Nivel 0 para identificar Shift/AltGr
 
-	if (keyval == GDK_KEY_Shift_L || keyval == GDK_KEY_Shift_R) {
+    // Identificar teclas Shift y AltGr para la lógica de `view->level2_keys` y `view->level3_keys`
+    // Esta parte es para la gestión interna de niveles, no para las etiquetas en sí.
+	if (keyval_main == GDK_KEY_Shift_L || keyval_main == GDK_KEY_Shift_R) {
 		if (!g_list_find_custom (view->level2_keys, name, (GCompareFunc) g_strcmp0))
 			view->level2_keys = g_list_prepend (view->level2_keys, (gpointer) name);
-		action = g_strdup ("⬆");
-	}
-
-	if (keyval == GDK_KEY_ISO_Level3_Shift) {
+		action_main = g_strdup ("⬆");
+	} else if (keyval_main == GDK_KEY_ISO_Level3_Shift) { // Esta es la tecla AltGr
 		if (!g_list_find_custom (view->level3_keys, name, (GCompareFunc) g_strcmp0))
 			view->level3_keys = g_list_prepend (view->level3_keys, (gpointer) name);
-		action = g_strdup ("⎇");
+		action_main = g_strdup ("⎇");
 	}
 
-	if (!action)
-		action = tecla_model_get_key_label (view->model, view->level, name);
 
-	tecla_key_set_label (key, action);
+    // Obtener etiqueta principal (nivel base o nivel Shift)
+    // view->level ya refleja el estado actual de los modificadores (0:base, 1:Shift, 2:AltGr, 3:Shift+AltGr)
+    // Para la etiqueta principal, nos interesan los niveles 0 y 1.
+    // Si AltGr está pulsado (level 2 o 3), la etiqueta principal debería seguir siendo la de nivel 0 o 1.
+    // O, si queremos que la etiqueta principal refleje el estado de Shift incluso con AltGr:
+    int main_label_level = view->level % 2; // 0 si level es 0 o 2; 1 si level es 1 o 3. Esto es (Base o AltGr) y (Shift o Shift+AltGr)
+
+
+    if (!action_main) { // Si no es una tecla especial como Shift o AltGr
+        action_main = tecla_model_get_key_label (view->model, main_label_level, name);
+    }
+
+
+	// Obtener etiqueta AltGr (nivel AltGr o nivel Shift+AltGr)
+    // Determinamos el nivel para la etiqueta AltGr basado en si Shift está presionado o no.
+    if ((view->toggled_levels & LEVEL2_PRESSED) != 0) { // Shift está presionado
+        altgr_paired_level = 3; // Nivel Shift + AltGr
+    } else { // Shift no está presionado
+        altgr_paired_level = 2; // Nivel AltGr
+    }
+    action_altgr = tecla_model_get_key_label(view->model, altgr_paired_level, name);
+
+	tecla_key_set_label (key, action_main ? action_main : "");
+    tecla_key_set_label_altgr (key, action_altgr ? action_altgr : "");
+
+    // g_free(action_main) y g_free(action_altgr) son manejados por g_autofree
 }
 
 static void
 update_view (TeclaView *view)
 {
+	if (!view->model) return; // Añadir guarda
 	g_hash_table_foreach (view->keys_by_name,
 			      (GHFunc) update_from_model_foreach,
 			      view);
@@ -444,19 +480,26 @@ static void
 model_changed_cb (TeclaModel *model,
 		  TeclaView  *view)
 {
-	view->toggled_levels = 0;
-	view->level = 0;
-	update_toggled_key_list (view, view->level2_keys, LEVEL2_PRESSED);
-	update_toggled_key_list (view, view->level3_keys, LEVEL3_PRESSED);
-	update_level (view);
-
+	// Limpiar las listas de teclas de nivel ANTES de llamar a update_view,
+    // ya que update_from_model_foreach las repoblará.
 	g_clear_list (&view->level2_keys, NULL);
 	g_clear_list (&view->level3_keys, NULL);
 
-	update_view (view);
+	view->toggled_levels = 0;
+	view->level = 0; // Resetear al nivel base
+	update_toggled_key_list (view, view->level2_keys, LEVEL2_PRESSED); // Esto no hará nada si las listas están vacías
+	update_toggled_key_list (view, view->level3_keys, LEVEL3_PRESSED); // ""
+	// update_level (view); // Se llamará dentro de set_model o al final de esta función si es necesario.
 
-	g_object_notify (G_OBJECT (view), "num-levels");
-	g_object_notify (G_OBJECT (view), "level");
+	update_view (view); // Esto repoblará level2_keys/level3_keys y establecerá etiquetas
+
+    // Después de update_view, los toggled_levels podrían haber cambiado si las teclas Shift/AltGr
+    // se procesaron. Forzamos una actualización de nivel y notificamos.
+    update_level(view); // Asegura que el nivel se recalcula y notifica si es necesario.
+
+
+	g_object_notify (G_OBJECT (view), "num-levels"); // Notificar cambio en el número de niveles
+	g_object_notify (G_OBJECT (view), "level");      // Notificar cambio de nivel
 }
 
 void
@@ -477,9 +520,17 @@ tecla_view_set_model (TeclaView  *view,
 		view->model_changed_id =
 			g_signal_connect (view->model, "changed",
 					  G_CALLBACK (model_changed_cb), view);
-	}
-
-	model_changed_cb (model, view);
+        model_changed_cb (view->model, view); // Llamar para la configuración inicial con el nuevo modelo
+	} else {
+        // Si el modelo se establece a NULL, limpiar la vista
+        view->toggled_levels = 0;
+        view->level = 0;
+        g_clear_list (&view->level2_keys, NULL);
+	    g_clear_list (&view->level3_keys, NULL);
+        update_view(view); // Limpiará las etiquetas
+        g_object_notify (G_OBJECT (view), "num-levels");
+	    g_object_notify (G_OBJECT (view), "level");
+    }
 }
 
 int
@@ -494,24 +545,43 @@ tecla_view_set_current_level (TeclaView *view,
 {
 	guint toggled_levels = 0;
 
-	if (level == 3 || level == 2)
-		toggled_levels |= LEVEL3_PRESSED;
-	if (level == 3 || level == 1)
-		toggled_levels |= LEVEL2_PRESSED;
+    // Esta función es llamada por los botones de nivel (1, 2, 3, 4)
+    // El 'level' aquí es 0-indexed internamente por Tecla (0,1,2,3)
+	if (level == 3) // Shift + AltGr
+        toggled_levels = LEVEL2_PRESSED | LEVEL3_PRESSED;
+    else if (level == 2) // AltGr
+        toggled_levels = LEVEL3_PRESSED;
+    else if (level == 1) // Shift
+        toggled_levels = LEVEL2_PRESSED;
+    // else level == 0 (base), toggled_levels = 0
+
+	if (view->toggled_levels == toggled_levels) return;
 
 	view->toggled_levels = toggled_levels;
 	update_toggled_key_list (view, view->level2_keys, LEVEL2_PRESSED);
 	update_toggled_key_list (view, view->level3_keys, LEVEL3_PRESSED);
-	update_level (view);
+	update_level (view); // Esto actualizará view->level y llamará a update_view
 }
 
 int
 tecla_view_get_num_levels (TeclaView *view)
 {
-	if (view->level2_keys && view->level3_keys)
+    // Esta lógica depende de si las teclas Shift y AltGr están presentes en el layout actual.
+    // Es posible que el modelo aún no se haya cargado o no tenga estas teclas.
+    if (!view->model) return 1;
+
+    // Para ser más robusto, deberíamos basarnos en las capacidades del xkb_keymap.
+    // Pero la lógica actual de Tecla usa la presencia de teclas especiales en el pc105_layout.
+    // Para este cambio, mantenemos la lógica existente pero asegurándonos que
+    // level2_keys y level3_keys se pueblan correctamente en update_from_model_foreach
+    // incluso si no son parte del layout visual (ej. si el layout es muy minimalista).
+
+	if (view->level2_keys && view->level3_keys) // Tiene Shift y AltGr
 		return 4;
-	else if (view->level3_keys || view->level2_keys)
-		return 2;
-	else
+	else if (view->level3_keys) // Tiene solo AltGr (o AltGr y no Shift, raro pero posible)
+		return 2; // Asumimos Base y AltGr
+    else if (view->level2_keys) // Tiene solo Shift
+        return 2; // Asumimos Base y Shift
+	else // No tiene ni Shift ni AltGr detectados como modificadores de nivel
 		return 1;
 }
