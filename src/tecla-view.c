@@ -235,14 +235,14 @@ construct_grid (TeclaView *view)
 	/* make sure we show the keyboard layout in RTL same as in LTR */
 	gtk_widget_set_direction (view->grid, GTK_TEXT_DIR_LTR);
 
-	for (i = 0; i < G_N_ELEMENTS (pc105_layout.rows); i++) {
-		for (j = 0; j < G_N_ELEMENTS (pc105_layout.rows[i].keys); j++) {
+	for (i = 0; i < G_N_ELEMENTS (ansi104_layout.rows); i++) {
+		for (j = 0; j < G_N_ELEMENTS (ansi104_layout.rows[i].keys); j++) {
 			TeclaLayoutKey *key;
 			GtkWidget *button, *prev;
 			double width, height;
 			int left, top;
 
-			key = &pc105_layout.rows[i].keys[j];
+			key = &ansi104_layout.rows[i].keys[j];
 			if (!key->name)
 				break;
 
