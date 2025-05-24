@@ -30,4 +30,8 @@ GtkWidget * tecla_key_new (const gchar *name);
 void tecla_key_set_label (TeclaKey    *key,
 			  const gchar *label);
 
+// Nueva función para la etiqueta AltGr
+void tecla_key_set_label_altgr (TeclaKey    *key,
+                                const gchar *label_altgr);
+
 const gchar * tecla_key_get_name (TeclaKey *key);
