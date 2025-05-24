@@ -35,7 +35,7 @@ enum
 	PROP_0,
 	PROP_NAME,
 	PROP_LABEL,
-    PROP_LABEL_ALTGR, // Podríamos añadir una propiedad si fuera necesario
+    // PROP_LABEL_ALTGR, // Podríamos añadir una propiedad si fuera necesario
 	N_PROPS,
 };
 
@@ -133,7 +133,7 @@ tecla_key_snapshot (GtkWidget *widget,
 		pango_layout_get_pixel_extents (layout_main, NULL, &rect_main);
 		// Escalar para que quepa, intentando que no sea demasiado pequeño.
 		// Podríamos querer un tamaño de fuente ligeramente más pequeño si ambas etiquetas están presentes.
-        float height_ratio_main = (key->label_altgr && key->label_altgr[0] != '\0') ? 0.40f : 0.75f;
+        float height_ratio_main = (key->label_altgr && key->label_altgr[0] != '\0') ? 0.60f : 0.75f;
 		scale_main = MIN ((float) (height * height_ratio_main) / rect_main.height, 2.0f);
         scale_main = MAX (scale_main, 0.5f); // Evitar que sea demasiado pequeño
 		scale_main = roundf (scale_main * 4.0f) / 4.0f; // Ajustar a cuartos de píxel
@@ -162,7 +162,7 @@ tecla_key_snapshot (GtkWidget *widget,
 	if (key->label_altgr && key->label_altgr[0] != '\0') {
 		layout_altgr = gtk_widget_create_pango_layout (widget, key->label_altgr);
 		pango_layout_get_pixel_extents (layout_altgr, NULL, &rect_altgr);
-        float height_ratio_altgr = 0.40f; // Darle un poco menos de espacio si la principal existe
+        float height_ratio_altgr = 0.60f; // Darle un poco menos de espacio si la principal existe
 		scale_altgr = MIN ((float) (height * height_ratio_altgr) / rect_altgr.height, 2.0f);
         scale_altgr = MAX (scale_altgr, 0.5f);
 		scale_altgr = roundf (scale_altgr * 4.0f) / 4.0f;
