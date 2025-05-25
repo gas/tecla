@@ -14,7 +14,7 @@ Esta versión de Tecla incluye las siguientes mejoras y características adicion
     * El carácter principal (activado por la tecla base o en combinación con Shift) se muestra con el color estándar.
     * El carácter secundario (activado por AltGr o AltGr+Shift) se muestra en una posición diferente y en color rojo, permitiendo una visualización más clara de distribuciones complejas como EurKEY.
 * **Representación Física ANSI (Opcional):**
-    * (Si has completado esta parte y es fácilmente configurable o por defecto en tu fork) Se utiliza una representación de teclado físico ANSI de 104 teclas (`ansi104.h`) para una visualización más precisa en teclados con esta disposición.
+    * Se utiliza una representación de teclado físico ANSI de 104 teclas (`ansi104.h`) para una visualización más precisa en teclados con esta disposición.
 
 ### 2. Opciones de Línea de Comandos
 
