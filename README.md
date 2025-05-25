@@ -1,8 +1,10 @@
 # Tecla
 
-Tecla is a keyboard layout viewer.
+Tecla es un visor de distribución de teclado que utiliza GTK/Libadwaita para la interfaz de usuario, y libxkbcommon para tratar con los mapas de teclado.
+Este es un fork de https://gitlab.gnome.org/GNOME/tecla adaptado para mostrar una doble disposición de un solo vistazo
 
-Tecla uses GTK/Libadwaita for UI, and libxkbcommon to deal with keyboard maps.
+![eurkey](https://github.com/user-attachments/assets/0cec17ea-b225-480f-9a5f-70d540a50b9a)
+
 
 ## Características en este Fork
 
